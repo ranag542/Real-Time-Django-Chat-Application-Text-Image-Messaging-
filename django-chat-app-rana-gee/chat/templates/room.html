@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .message img {
+          max-width: 300px;
+          height: auto;
+          border-radius: 10px;
+          object-fit: cover;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: #ffffff;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar h2 {
+            text-align: center;
+            padding: 10px;
+            background-color: #f7f7f7;
+            margin: 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .sidebar ul li {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .sidebar ul li img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .sidebar ul li:hover {
+            background-color: #f7f7f7;
+        }
+        
+        .chat-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #ddd;
+            background-color: #ffffff;
+        }
+        
+        .chat-header {
+            padding: 10px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f2f2f2;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message p {
+            margin: 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 60%;
+        }
+        
+        .message.you {
+            align-items: flex-end;
+        }
+        
+        .message.you p {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+        
+        .message.them {
+            align-items: flex-start;
+        }
+        
+        .message.them p {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+        
+        .chat-input {
+            padding: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #ddd;
+        }
+        
+        .chat-input form {
+            display: flex;
+        }
+        
+        .chat-input input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        
+        .chat-input input[type="submit"] {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #ffffff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Chats</h2>
+            <ul>
+                {% load static %}
+                {% for user in users %}
+                <li>
+                    <img src="{% static 'images/avatar.png' %}" alt="Avatar">
+                    <span>{{ user.user_name }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="chat-section">
+            <div class="chat-header">
+                <img src="{% static 'images/avatar.png' %}" alt="Avatar">
+                <span>{{ username }}</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+    {% for message in messages %}
+    <div class="message {% if message.user.user_name == username %}you{% else %}them{% endif %}">
+        {% if message.image %}
+        <p><strong>{{ message.user.user_name }}</strong>:</p>
+        <img src="{{ message.image.url }}" alt="Image" style="max-width: 300px; max-height: 400px; border-radius: 10px;">
+        {% else %}
+        <p>
+            <strong>{{ message.user.user_name }}</strong>: {{ message.content }}
+            <small>{{ message.timestamp|date:"H:i:s, M d" }}</small>
+        </p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+            <div class="chat-input">
+                <form id="post-form" enctype="multipart/form-data">
+                    <input type="hidden" name="username" id="username" value="{{ username }}" />
+                    <input type="text" name="message" id="message" placeholder="Type a message" />
+                    <input type="file" name="image" id="image" accept="image/png, image/jpeg" style="display: none;">
+                    <label for="image" style="cursor: pointer;">📷</label>
+                    <input type="submit" value="Send">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messageContainer = document.getElementById('chat-messages');
+            if (messageContainer) {
+                // Scroll to the bottom of the chat messages on page load
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+        });
+    
+        document.getElementById('post-form').onsubmit = function (e) {
+            e.preventDefault();
+    
+            const formData = new FormData();
+            const username = document.getElementById('username').value;
+            const message = document.getElementById('message').value.trim();
+            const imageFile = document.getElementById('image').files[0];
+    
+            // Add form data
+            formData.append('username', username);
+            if (message) {
+                formData.append('message', message);
+            }
+            if (imageFile) {
+                formData.append('image', imageFile);
+            } else if (pastedImageFile) {
+                formData.append('image', pastedImageFile);
+            }
+    
+            // AJAX request
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '{% url "post_message" %}', true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.status === 'Message sent') {
+                        addMessageToChat(username, response.message, response.image_url, 'just now', true);
+                        resetForm();
+                    } else {
+                        alert('Failed to send message');
+                    }
+                }
+            };
+            xhr.send(formData);
+        };
+    
+        // Add new message to chat
+        function addMessageToChat(user, message, imageUrl, timestamp, isOwnMessage) {
+            const messageContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', isOwnMessage ? 'you' : 'them');
+    
+            if (imageUrl) {
+                messageDiv.innerHTML = `
+                    <p><strong>${user}</strong>:</p>
+                    <img src="${imageUrl}" style="max-width: 300px; border-radius: 10px;">
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <p><strong>${user}</strong>: ${message}
+                        <small>${timestamp}</small>
+                    </p>
+                `;
+            }
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll
+        }
+    
+        // Reset form after submission
+        function resetForm() {
+            document.getElementById('message').value = ''; // Clear message input
+            document.getElementById('image').value = '';   // Clear file input
+            pastedImageFile = null;                       // Clear pasted image
+        }
+    
+        // Handle pasted images
+        let pastedImageFile = null; // Global variable for pasted images
+        document.getElementById('message').addEventListener('paste', function (e) {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.startsWith('image/')) {
+                    const file = items[i].getAsFile();
+                    pastedImageFile = file; // Store the file globally
+                    previewPastedImage(file);
+                    break; // Handle only the first image
+                }
+            }
+        });
+    
+        // Preview pasted image
+        function previewPastedImage(file) {
+            const previewContainer = document.createElement('div');
+            previewContainer.innerHTML = '<p>Image added! Press send to upload.</p>';
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.maxWidth = '300px';
+            img.style.borderRadius = '10px';
+            previewContainer.appendChild(img);
+            document.querySelector('.chat-input').appendChild(previewContainer);
+        }
+    </script>
+</body>    
+
+
+</html>
