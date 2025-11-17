@@ -1,7 +1,8 @@
 # 🗨️ Real-Time Django Chat Application
 
 <p align="center">
-  <img src="chat_images/Screenshot 2025-11-17 054004.png" width="750">
+  <img src="django-chat-app-rana-gee/chat_images/Screenshot 2025-11-17 054004.png" width="750">
+
 </p>
 
 A real-time chat application built with Django, AJAX, user authentication, and image sharing.
